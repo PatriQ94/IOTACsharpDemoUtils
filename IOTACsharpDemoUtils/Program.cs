@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using Tangle.Net.Cryptography;
 using Tangle.Net.Entity;
 using Tangle.Net.Repository.Factory;
+using Tangle.Net.Zmq;
 
 namespace IOTACsharpDemoUtils
 {
@@ -9,7 +12,8 @@ namespace IOTACsharpDemoUtils
     {
         static void Main(string[] args)
         {
-            SendBalance();
+            //SendBalance();
+            ZMQTest();
         }
 
         public static void SendBalance()
@@ -22,7 +26,7 @@ namespace IOTACsharpDemoUtils
 
             var mainDevnetSeed = new Seed("PHIDOZJCOJGGYHMP9DPZQGHXYCBMJEJWESNEXGAEUY9OGUOKKUYYEBREJBXRWRSHCWSFPILJBPVCDKGVA");
             //var depositSeed = repository.GetNewAddresses(s1, 0, 1, SecurityLevel.Medium);
-            var mainDevnetSeedsenderBalance = repository.GetAccountData(mainDevnetSeed, true, 2, 0, 5);
+            //var mainDevnetSeedsenderBalance = repository.GetAccountData(mainDevnetSeed, true, 2, 0, 5);
 
 
             //var senderSeed = new Seed("VJEFRYYWLYMKGGQPERQISOAIJRCLKDJKDYFPQYTAEKQVLEFTEYKYKVSEFBWBCLVNBUPNYCUDNXSJQLKWV");
@@ -36,7 +40,7 @@ namespace IOTACsharpDemoUtils
 
             //Prepare transaction
             var transfer1 = new Transfer(
-                address: "KVYJYZMDKBHGWRGTZUGDIYDHHVM9EUCPPRHYNTHIVQEZK9XSDRRGGGX9YVOABHQT9CCGNSNUNGEIXXE9XJWDNH9GR9",
+                address: "TJGKASWXRYEQUILZBVBYVORFXWZBOGHGOEMLZBMFYFKURXGBBDNCFFODEPZLTP9E9ZNOZDDUEPSUNIKXDIRBMM9PHB",
                 tag: "PATRIQTUTORIALS",
                 message: "PatriQ tutorials testing https://patriq.gitbook.io/iota/",
                 timestamp: DateTime.Now,
@@ -52,6 +56,29 @@ namespace IOTACsharpDemoUtils
             //Check the result in Tangle Explorer
             Console.WriteLine("Link to Tangle Explorer: {0}{1}", "https://devnet.thetangle.org/bundle/", result.Hash);
 
+        }
+
+        public static void ZMQTest() {
+            // Subscribe to transactions event
+            ZmqIriListener.Transactions += (sender, eventArgs) =>
+            {
+                Console.WriteLine("-----------------------");
+                Console.WriteLine(eventArgs.Transaction.Hash);
+                Console.WriteLine(eventArgs.Transaction.Address);
+            };
+
+            // Start listening to the event type (use MessageType.All) to subscribe to all events
+            var tokenSource = ZmqIriListener.Listen("tcp://node_url", MessageType.Transactions);
+
+            // Listen for 60 seconds
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            while (stopwatch.ElapsedMilliseconds < 600000)
+            {
+                Thread.Sleep(100);
+            }
+            // Cancel the thread
+            tokenSource.Cancel();
         }
     }
 }
